@@ -51,14 +51,48 @@ We use two distinct, independent signals to capture semantic and structural feat
 ### Variant A: High-Confidence Human (Verdict: likely_human, Confidence >= 75%)
 - **Header**: `Verified Human-Written`
 - **Exact Text**: `Provenance Guard: Verified Human-Written. This content shows strong indicators of human authorship, exhibiting rich sentence structure and organic stylistic variance. Confidence: High (Calibrated at {confidence}%).`
+- **Visual Mockup**:
+```
++---------------------------------------------------------------------------------------+
+| 🟢 Verified Human-Written                                                             |
+|                                                                                       |
+| Provenance Guard: Verified Human-Written. This content shows strong indicators of     |
+| human authorship, exhibiting rich sentence structure and organic stylistic variance.  |
+| Confidence: High (Calibrated at 80%).                                                 |
++---------------------------------------------------------------------------------------+
+```
 
 ### Variant B: High-Confidence AI (Verdict: likely_ai, Confidence >= 75%)
 - **Header**: `AI-Generated Content`
 - **Exact Text**: `Provenance Guard: AI-Generated Content. This content matches patterns commonly associated with AI models. Confidence: High (Calibrated at {confidence}%). This classification is based on stylistic and semantic analysis. If you are the creator and believe this is an error, you may file an appeal.`
+- **Visual Mockup**:
+```
++---------------------------------------------------------------------------------------+
+| 🔴 AI-Generated Content                                                               |
+|                                                                                       |
+| Provenance Guard: AI-Generated Content. This content matches patterns commonly        |
+| associated with AI models. Confidence: High (Calibrated at 95%).                      |
+|                                                                                       |
+| *This classification is based on stylistic and semantic analysis. If you are the      |
+| creator and believe this is an error, you may file an appeal.*                        |
++---------------------------------------------------------------------------------------+
+```
 
 ### Variant C: Uncertain / Indeterminate (Verdict: uncertain OR Confidence < 75%)
 - **Header**: `Indeterminate / Mixed Style`
 - **Exact Text**: `Provenance Guard: Indeterminate/Mixed Signals. Our analysis did not find clear evidence to classify this content as either fully human-written or AI-generated. This often occurs when writing is highly structured or contains a blend of styles. Confidence: Low/Uncertain. If you are the creator and wish to clarify your process, you may submit an appeal.`
+- **Visual Mockup**:
+```
++---------------------------------------------------------------------------------------+
+| 🟡 Indeterminate / Mixed Style                                                        |
+|                                                                                       |
+| Provenance Guard: Indeterminate/Mixed Signals. Our analysis did not find clear        |
+| evidence to classify this content as either fully human-written or AI-generated.      |
+| Confidence: Low/Uncertain.                                                            |
+|                                                                                       |
+| *If you are the creator and wish to clarify your process, you may submit an appeal.*  |
++---------------------------------------------------------------------------------------+
+```
 
 ---
 
