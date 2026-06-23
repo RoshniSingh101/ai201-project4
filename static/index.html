@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Provenance Guard Dashboard</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-gradient: radial-gradient(circle at top, #0f172a, #020617);
+            --panel-bg: rgba(30, 41, 59, 0.45);
+            --panel-border: rgba(255, 255, 255, 0.08);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            
+            --color-human: #10b981;
+            --color-human-glow: rgba(16, 185, 129, 0.15);
+            --color-ai: #ef4444;
+            --color-ai-glow: rgba(239, 68, 68, 0.15);
+            --color-uncertain: #f59e0b;
+            --color-uncertain-glow: rgba(245, 158, 11, 0.15);
+            
+            --font-main: 'Outfit', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            font-size: 2.2rem;
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 15px rgba(99, 102, 241, 0.3));
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            background: linear-gradient(to right, #f8fafc, #cbd5e1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            padding: 0.4rem 0.8rem;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #818cf8;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--color-human);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--color-human);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.9); opacity: 0.6; }
+            50% { transform: scale(1.15); opacity: 1; }
+            100% { transform: scale(0.9); opacity: 0.6; }
+        }
+
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 900px) {
+            .grid-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .glass-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 16px;
+            padding: 2rem;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: #e2e8f0;
+        }
+
+        .card-title i {
+            color: #6366f1;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        input[type="text"], textarea {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            font-size: 0.95rem;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        input[type="text"]:focus, textarea:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+            background: rgba(15, 23, 42, 0.8);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 220px;
+            line-height: 1.6;
+        }
+
+        .char-counter {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            align-self: flex-end;
+            margin-top: -0.25rem;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 0.9rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+            background: linear-gradient(135deg, #818cf8, #4f46e5);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            background: rgba(100, 116, 139, 0.3);
+            color: rgba(255, 255, 255, 0.4);
+            box-shadow: none;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Results view elements */
+        .placeholder-result {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem 0;
+            color: var(--text-secondary);
+            text-align: center;
+            gap: 1rem;
+        }
+
+        .placeholder-result i {
+            font-size: 3rem;
+            opacity: 0.3;
+        }
+
+        .result-view {
+            display: none;
+            flex-direction: column;
+            gap: 1.5rem;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .verdict-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            border-radius: 12px;
+            border: 1px solid transparent;
+        }
+
+        .verdict-header.human {
+            background: var(--color-human-glow);
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        .verdict-header.ai {
+            background: var(--color-ai-glow);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        .verdict-header.uncertain {
+            background: var(--color-uncertain-glow);
+            border-color: rgba(245, 158, 11, 0.3);
+        }
+
+        .verdict-title-text {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .verdict-title-text.human { color: var(--color-human); }
+        .verdict-title-text.ai { color: var(--color-ai); }
+        .verdict-title-text.uncertain { color: var(--color-uncertain); }
+
+        .confidence-circle {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .confidence-circle span:first-child {
+            font-size: 1.5rem;
+            font-weight: 800;
+        }
+
+        .confidence-circle span:last-child {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .transparency-label-box {
+            background: rgba(15, 23, 42, 0.4);
+            border-left: 4px solid #6366f1;
+            padding: 1.25rem;
+            border-radius: 0 12px 12px 0;
+            line-height: 1.6;
+            font-size: 0.95rem;
+            color: #cbd5e1;
+        }
+
+        .transparency-label-box.human { border-left-color: var(--color-human); }
+        .transparency-label-box.ai { border-left-color: var(--color-ai); }
+        .transparency-label-box.uncertain { border-left-color: var(--color-uncertain); }
+
+        .scores-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .score-bar-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .score-bar-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+        }
+
+        .score-bar-container {
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+
+        .score-bar-fill {
+            height: 100%;
+            border-radius: 9999px;
+            width: 0%;
+            transition: width 0.8s cubic-bezier(0.1, 0.8, 0.2, 1);
+        }
+
+        .score-bar-fill.combined { background: linear-gradient(to right, #6366f1, #a855f7); }
+        .score-bar-fill.llm { background: #3b82f6; }
+        .score-bar-fill.stylometric { background: #ec4899; }
+
+        .btn-appeal {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            color: #f87171;
+            margin-top: 0.5rem;
+        }
+
+        .btn-appeal:hover {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.4);
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.15);
+        }
+
+        /* Audit logs section */
+        .logs-section {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 16px;
+            padding: 2rem;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            width: 100%;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.88rem;
+        }
+
+        th {
+            padding: 1rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            vertical-align: middle;
+            color: #e2e8f0;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: capitalize;
+        }
+
+        .badge.human { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+        .badge.ai { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+        .badge.uncertain { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+        .badge.submission { background: rgba(99, 102, 241, 0.15); color: #818cf8; }
+        .badge.appeal { background: rgba(236, 72, 153, 0.15); color: #f472b6; }
+        .badge.under_review { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+        .badge.classified { background: rgba(100, 116, 139, 0.15); color: #94a3b8; }
+
+        .text-truncate {
+            max-width: 250px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .log-score-cell {
+            font-family: monospace;
+            font-size: 0.8rem;
+        }
+
+        /* Modal styling */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(2, 6, 23, 0.75);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .modal-content {
+            background: #0f172a;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            max-width: 500px;
+            width: 100%;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            position: relative;
+            animation: modalSlide 0.3s ease;
+        }
+
+        @keyframes modalSlide {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.25rem;
+            cursor: pointer;
+        }
+
+        .close-btn:hover {
+            color: var(--text-primary);
+        }
+
+        /* Notifications / Toasts */
+        .toast-container {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            z-index: 2000;
+        }
+
+        .toast {
+            background: #1e293b;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 1rem 1.5rem;
+            color: var(--text-primary);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            min-width: 280px;
+            animation: slideIn 0.3s ease forwards;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .toast.success i { color: var(--color-human); }
+        .toast.error i { color: var(--color-ai); }
+        .toast.info i { color: #3b82f6; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Dashboard Header -->
+        <header>
+            <div class="logo-area">
+                <i class="fa-solid fa-shield-halved logo-icon"></i>
+                <div>
+                    <h1>Provenance Guard</h1>
+                    <div class="subtitle">Multi-Signal AI Content Attribution & Trust Engine</div>
+                </div>
+            </div>
+            <div class="status-badge">
+                <div class="status-dot"></div>
+                <span>Pipeline Operational</span>
+            </div>
+        </header>
+
+        <!-- Main Workspace -->
+        <div class="grid-layout">
+            <!-- Left Side: Submission Panel -->
+            <div class="glass-card">
+                <div class="card-title">
+                    <i class="fa-solid fa-file-pen"></i>
+                    <span>Analyze Content</span>
+                </div>
+                
+                <div class="form-group">
+                    <label for="creator-id">Creator Identifier</label>
+                    <input type="text" id="creator-id" placeholder="e.g. author-404, guest_writer_88" value="guest_creator_1">
+                </div>
+
+                <div class="form-group">
+                    <label for="content-text">Content Text (Creative Excerpt, Poem, Article)</label>
+                    <textarea id="content-text" placeholder="Type or paste the original text content here... (minimum 5 words)"></textarea>
+                    <span class="char-counter" id="char-counter">0 characters</span>
+                </div>
+
+                <button class="btn" id="btn-submit" onclick="submitContent()">
+                    <i class="fa-solid fa-magnifying-glass-chart"></i>
+                    <span>Attribute Content</span>
+                </button>
+            </div>
+
+            <!-- Right Side: Classification Results -->
+            <div class="glass-card" id="results-panel">
+                <div class="card-title">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>Classification Report</span>
+                </div>
+                
+                <!-- Initial State Placeholder -->
+                <div class="placeholder-result" id="results-placeholder">
+                    <i class="fa-solid fa-fingerprint"></i>
+                    <p>Enter creative writing text and submit to perform multi-signal origin analysis.</p>
+                </div>
+
+                <!-- Live Results View -->
+                <div class="result-view" id="results-view">
+                    <div class="verdict-header" id="verdict-header-element">
+                        <div>
+                            <span class="subtitle">Verdicts</span>
+                            <div class="verdict-title-text" id="verdict-text-element">Verified Human-Written</div>
+                        </div>
+                        <div class="confidence-circle">
+                            <span id="confidence-pct">89%</span>
+                            <span>Confidence</span>
+                        </div>
+                    </div>
+
+                    <div class="transparency-label-box" id="transparency-label-element">
+                        Provenance Guard: Verified Human-Written. This content shows strong indicators of human authorship, exhibiting rich sentence structure and organic stylistic variance. Confidence: High (Calibrated at 89%).
+                    </div>
+
+                    <div class="scores-grid">
+                        <!-- Combined Score -->
+                        <div class="score-bar-group">
+                            <div class="score-bar-header">
+                                <span style="font-weight: 600;">Combined AI Authorship Score</span>
+                                <span id="val-combined-score" style="font-weight: 600;">0.24</span>
+                            </div>
+                            <div class="score-bar-container">
+                                <div class="score-bar-fill combined" id="bar-combined-score"></div>
+                            </div>
+                        </div>
+
+                        <!-- LLM Semantic Score -->
+                        <div class="score-bar-group">
+                            <div class="score-bar-header">
+                                <span>LLM Semantic Analysis (Groq LLaMA)</span>
+                                <span id="val-llm-score">0.20</span>
+                            </div>
+                            <div class="score-bar-container">
+                                <div class="score-bar-fill llm" id="bar-llm-score"></div>
+                            </div>
+                        </div>
+
+                        <!-- Heuristics Score -->
+                        <div class="score-bar-group">
+                            <div class="score-bar-header">
+                                <span>Stylometric Heuristics (Uniformity Heuristics)</span>
+                                <span id="val-styl-score">0.35</span>
+                            </div>
+                            <div class="score-bar-container">
+                                <div class="score-bar-fill stylometric" id="bar-styl-score"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Appeal Trigger Button -->
+                    <button class="btn btn-appeal" id="btn-appeal-trigger" onclick="openAppealModal()" style="display: none;">
+                        <i class="fa-solid fa-circle-exclamation"></i>
+                        <span>Contest Verdict (File Appeal)</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Audit Log View -->
+        <div class="logs-section">
+            <div class="card-title">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                <span>Structured Audit Logs</span>
+            </div>
+            
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Content ID</th>
+                            <th>Creator</th>
+                            <th>Event</th>
+                            <th>Verdict</th>
+                            <th>Confidence</th>
+                            <th>LLM</th>
+                            <th>Stylometric</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logs-tbody">
+                        <tr>
+                            <td colspan="9" style="text-align: center; color: var(--text-secondary); padding: 2rem;">
+                                <i class="fa-solid fa-spinner fa-spin" style="margin-right: 0.5rem;"></i> Loading audit logs...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Appeal Form Modal -->
+    <div class="modal" id="appeal-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">File Creator Appeal</h3>
+                <button class="close-btn" onclick="closeAppealModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.5;">
+                If you believe this text was misclassified, appeal to submit it for manual inspection. Provide detailed information about your writing process (e.g., drafts, context, styling choices).
+            </div>
+
+            <input type="hidden" id="appeal-content-id">
+
+            <div class="form-group">
+                <label for="appeal-reasoning">Describe your drafting process & reasons</label>
+                <textarea id="appeal-reasoning" placeholder="Detail your process, tools used, drafts, or references. E.g., 'I wrote this manually from personal notes. I am a non-native speaker, which is why my structures may look formal...'" style="min-height: 120px;"></textarea>
+            </div>
+
+            <button class="btn" id="btn-submit-appeal" onclick="submitAppeal()">
+                <i class="fa-solid fa-paper-plane"></i>
+                <span>File Formal Appeal</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script>
+        // Track the current classification content ID
+        let currentContentId = null;
+
+        // Character counter logic
+        const contentTextarea = document.getElementById('content-text');
+        const charCounter = document.getElementById('char-counter');
+        contentTextarea.addEventListener('input', () => {
+            const len = contentTextarea.value.length;
+            charCounter.textContent = `${len} character${len !== 1 ? 's' : ''}`;
+        });
+
+        // Initialize Audit Log
+        window.addEventListener('DOMContentLoaded', () => {
+            fetchLogs();
+            // Poll audit logs every 10 seconds
+            setInterval(fetchLogs, 10000);
+        });
+
+        // Toast helper
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            let icon = 'fa-circle-info';
+            if (type === 'success') icon = 'fa-circle-check';
+            if (type === 'error') icon = 'fa-circle-xmark';
+            
+            toast.innerHTML = `
+                <i class="fa-solid ${icon}"></i>
+                <span>${message}</span>
+            `;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.animation = 'slideIn 0.3s ease reverse forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // Fetch logs from /log
+        async function fetchLogs() {
+            try {
+                const response = await fetch('/log');
+                if (!response.ok) throw new Error('Failed to query logs');
+                const data = await response.json();
+                renderLogs(data.entries);
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // Render logs in the table
+        function renderLogs(entries) {
+            const tbody = document.getElementById('logs-tbody');
+            if (!entries || entries.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="9" style="text-align: center; color: var(--text-secondary); padding: 2rem;">
+                            No records present in audit logs database.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = entries.map(entry => {
+                const date = new Date(entry.timestamp);
+                const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                
+                let verdictBadge = '';
+                if (entry.attribution) {
+                    const cleanVerdict = entry.attribution.replace('_', ' ');
+                    verdictBadge = `<span class="badge ${entry.attribution}">${cleanVerdict}</span>`;
+                } else {
+                    verdictBadge = `<span style="color: var(--text-secondary)">-</span>`;
+                }
+
+                const eventBadge = `<span class="badge ${entry.event_type}">${entry.event_type}</span>`;
+                const statusBadge = `<span class="badge ${entry.status || 'classified'}">${(entry.status || 'classified').replace('_', ' ')}</span>`;
+                
+                const confidenceVal = entry.confidence !== null ? `${(entry.confidence * 100).toFixed(0)}%` : '-';
+                const llmVal = entry.llm_score !== null ? entry.llm_score.toFixed(2) : '-';
+                const stylVal = entry.stylometric_score !== null ? entry.stylometric_score.toFixed(2) : '-';
+
+                return `
+                    <tr>
+                        <td style="white-space: nowrap;">${timeString}</td>
+                        <td class="log-score-cell"><span class="text-truncate" style="display:inline-block; max-width:80px;" title="${entry.content_id}">${entry.content_id.substring(0, 8)}...</span></td>
+                        <td><span class="text-truncate" style="display:inline-block; max-width:100px;">${entry.creator_id || 'N/A'}</span></td>
+                        <td>${eventBadge}</td>
+                        <td>${verdictBadge}</td>
+                        <td>${confidenceVal}</td>
+                        <td class="log-score-cell">${llmVal}</td>
+                        <td class="log-score-cell">${stylVal}</td>
+                        <td>${statusBadge}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Submit Content to POST /submit
+        async function submitContent() {
+            const text = contentTextarea.value.trim();
+            const creator_id = document.getElementById('creator-id').value.trim();
+            const btnSubmit = document.getElementById('btn-submit');
+
+            if (!text) {
+                showToast("Please enter some text before submitting.", "error");
+                return;
+            }
+            if (!creator_id) {
+                showToast("Please provide a creator identifier.", "error");
+                return;
+            }
+
+            // Disable button and change label during processing
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Analyzing Origin...</span>`;
+
+            try {
+                const response = await fetch('/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text, creator_id })
+                });
+
+                if (response.status === 429) {
+                    showToast("Rate limit exceeded! Maximum 10 requests per minute.", "error");
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerHTML = `<i class="fa-solid fa-magnifying-glass-chart"></i> <span>Attribute Content</span>`;
+                    return;
+                }
+
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.message || 'API classification failed.');
+                }
+
+                const result = await response.json();
+                displayResults(result);
+                fetchLogs();
+                showToast("Content analyzed successfully.", "success");
+
+            } catch (err) {
+                showToast(err.message, "error");
+            } finally {
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = `<i class="fa-solid fa-magnifying-glass-chart"></i> <span>Attribute Content</span>`;
+            }
+        }
+
+        // Show results
+        function displayResults(data) {
+            document.getElementById('results-placeholder').style.display = 'none';
+            const resultsView = document.getElementById('results-view');
+            resultsView.style.display = 'flex';
+
+            // Set Verdict header classes
+            const header = document.getElementById('verdict-header-element');
+            const titleText = document.getElementById('verdict-text-element');
+            header.className = 'verdict-header'; // Reset
+            titleText.className = 'verdict-title-text';
+            
+            let verdictLabel = data.attribution.replace('_', ' ');
+            titleText.textContent = verdictLabel;
+
+            if (data.attribution === 'likely_human') {
+                header.classList.add('human');
+                titleText.classList.add('human');
+            } else if (data.attribution === 'likely_ai') {
+                header.classList.add('ai');
+                titleText.classList.add('ai');
+            } else {
+                header.classList.add('uncertain');
+                titleText.classList.add('uncertain');
+            }
+
+            // Calibrated Confidence
+            document.getElementById('confidence-pct').textContent = `${(data.confidence * 100).toFixed(0)}%`;
+
+            // Transparency Label Box
+            const labelBox = document.getElementById('transparency-label-element');
+            labelBox.className = 'transparency-label-box';
+            labelBox.textContent = data.label;
+            if (data.attribution === 'likely_human') labelBox.classList.add('human');
+            else if (data.attribution === 'likely_ai') labelBox.classList.add('ai');
+            else labelBox.classList.add('uncertain');
+
+            // Progress Bars
+            document.getElementById('val-combined-score').textContent = data.combined_score.toFixed(3);
+            document.getElementById('bar-combined-score').style.width = `${data.combined_score * 100}%`;
+
+            document.getElementById('val-llm-score').textContent = data.llm_score.toFixed(3);
+            document.getElementById('bar-llm-score').style.width = `${data.llm_score * 100}%`;
+
+            document.getElementById('val-styl-score').textContent = data.stylometric_score.toFixed(3);
+            document.getElementById('bar-styl-score').style.width = `${data.stylometric_score * 100}%`;
+
+            // Save content ID for potential appeal
+            currentContentId = data.content_id;
+            document.getElementById('appeal-content-id').value = currentContentId;
+
+            // Show appeal button if not likely_human with high confidence
+            const btnAppeal = document.getElementById('btn-appeal-trigger');
+            if (data.attribution === 'likely_ai' || data.attribution === 'uncertain') {
+                btnAppeal.style.display = 'flex';
+            } else {
+                btnAppeal.style.display = 'none';
+            }
+        }
+
+        // Modal Operations
+        function openAppealModal() {
+            document.getElementById('appeal-modal').style.display = 'flex';
+        }
+
+        function closeAppealModal() {
+            document.getElementById('appeal-modal').style.display = 'none';
+            document.getElementById('appeal-reasoning').value = '';
+        }
+
+        // Submit Appeal to POST /appeal
+        async function submitAppeal() {
+            const content_id = document.getElementById('appeal-content-id').value;
+            const creator_reasoning = document.getElementById('appeal-reasoning').value.trim();
+            const btnAppeal = document.getElementById('btn-submit-appeal');
+
+            if (!creator_reasoning) {
+                showToast("Please provide details of your process.", "error");
+                return;
+            }
+
+            btnAppeal.disabled = true;
+            btnAppeal.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Submitting Appeal...</span>`;
+
+            try {
+                const response = await fetch('/appeal', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content_id, creator_reasoning })
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.message || 'Appeal filing failed.');
+                }
+
+                showToast("Appeal filed successfully. Status updated to under review.", "success");
+                closeAppealModal();
+                fetchLogs();
+
+                // Hide appeal button from results panel since it is now filed
+                document.getElementById('btn-appeal-trigger').style.display = 'none';
+
+            } catch (err) {
+                showToast(err.message, "error");
+            } finally {
+                btnAppeal.disabled = false;
+                btnAppeal.innerHTML = `<i class="fa-solid fa-paper-plane"></i> <span>File Formal Appeal</span>`;
+            }
+        }
+    </script>
+</body>
+</html>
